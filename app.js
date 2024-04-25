@@ -31,10 +31,14 @@ function getKeyString(x, y) {
 
 function createName() {
   const prefix = randomFromArray([
-    "CWEL",
+    "test1",
+    "test2",
+    "test3"
   ]);
   const animal = randomFromArray([
-    "JEBANY",
+    "wspaniały",
+    "magiczny",
+    "mądry"
   ]);
   return `${prefix} ${animal}`;
 }
@@ -245,6 +249,58 @@ placeCoin();
 
     placeCoin();
   }
+
+  const chatMessages = document.querySelector("#chat-messages");
+const chatInput = document.querySelector("#chat-input");
+const chatSend = document.querySelector("#chat-send");
+
+// Tworzymy referencję do czatu w bazie danych Firebase
+const chatRef = firebase.database().ref('chat');
+
+// Nasłuchujemy na nowe wiadomości w czacie
+chatRef.on('child_added', snapshot => {
+  const data = snapshot.val();
+  const messageElement = document.createElement("p");
+  messageElement.textContent = `${data.name}: ${data.message}`;
+  chatMessages.appendChild(messageElement);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+chatSend.addEventListener("click", sendMessage);
+
+// Dodajemy nasłuchiwacz zdarzeń 'keypress' do pola input czatu
+chatInput.addEventListener("keypress", function (e) {
+  if (e.key === 'Enter') {
+    sendMessage();
+  }
+});
+
+function sendMessage() {
+  const message = chatInput.value;
+  chatInput.value = "";
+  chatRef.push({
+    name: players[playerId].name,
+    message: message
+  });
+}
+const maxMessages = 17;
+
+
+chatRef.limitToLast(maxMessages).on('value', snapshot => {
+  // Najpierw usuwamy wszystkie istniejące wiadomości
+  chatMessages.innerHTML = '';
+
+  // Następnie dodajemy każdą wiadomość do czatu
+  snapshot.forEach(childSnapshot => {
+    const data = childSnapshot.val();
+    const messageElement = document.createElement("p");
+    messageElement.textContent = `${data.name}: ${data.message}`;
+    chatMessages.appendChild(messageElement);
+  });
+
+  // Przewijamy na dół, aby zobaczyć najnowsze wiadomości
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
 
   firebase.auth().onAuthStateChanged((user) => {
     if (user) {
