@@ -114,31 +114,34 @@ function getRandomSafeSpot() {
   }
 
   function handleKeyPress(xChange = 0, yChange = 0) {
-    const newX = players[playerId].x + xChange;
-    const newY = players[playerId].y + yChange;
-    if (!isSolid(newX, newY)) {
-      players[playerId].x = newX;
-      players[playerId].y = newY;
-      if (xChange === 1) {
-        players[playerId].direction = "right";
+    // Sprawdzamy, czy pole input czatu jest aktualnie aktywne
+    if (document.activeElement !== chatInput) {
+      const newX = players[playerId].x + xChange;
+      const newY = players[playerId].y + yChange;
+      if (!isSolid(newX, newY)) {
+        players[playerId].x = newX;
+        players[playerId].y = newY;
+        if (xChange === 1) {
+          players[playerId].direction = "right";
+        }
+        if (xChange === -1) {
+          players[playerId].direction = "left";
+        }
+        playerRef.set(players[playerId]); // Aktualizacja danych gracza w bazie danych Firebase
+        attemptGrabCoin(newX, newY);
+    
+        // Zapisz stan gry w bazie danych Firebase
+        firebase.database().ref(`gameState/${playerId}`).set({
+          x: newX,
+          y: newY,
+          direction: players[playerId].direction,
+          color: players[playerId].color,
+          coins: players[playerId].coins
+        });
       }
-      if (xChange === -1) {
-        players[playerId].direction = "left";
-      }
-      playerRef.set(players[playerId]); // Aktualizacja danych gracza w bazie danych Firebase
-      attemptGrabCoin(newX, newY);
-  
-      // Zapisz stan gry w bazie danych Firebase
-      firebase.database().ref(`gameState/${playerId}`).set({
-        x: newX,
-        y: newY,
-        direction: players[playerId].direction,
-        color: players[playerId].color,
-        coins: players[playerId].coins
-      });
     }
   }
-
+  
   // Wczytaj stan gry z bazy danych Firebase
 firebase.database().ref(`gameState/${playerId}`).once('value').then((snapshot) => {
   const data = snapshot.val();
@@ -250,9 +253,11 @@ placeCoin();
     placeCoin();
   }
 
-  const chatMessages = document.querySelector("#chat-messages");
+const chatMessages = document.querySelector("#chat-messages");
 const chatInput = document.querySelector("#chat-input");
 const chatSend = document.querySelector("#chat-send");
+
+
 
 // Tworzymy referencję do czatu w bazie danych Firebase
 const chatRef = firebase.database().ref('chat');
@@ -277,13 +282,25 @@ chatInput.addEventListener("keypress", function (e) {
 
 function sendMessage() {
   const message = chatInput.value;
+  // Sprawdzamy, czy wiadomość nie jest pusta
+  if (message.trim() === "") {
+    alert("Wiadomość nie może być pusta!");
+    return;
+  }
+  // Sprawdzamy, czy wiadomość nie przekracza 30 znaków
+  if (message.length > 30) {
+    alert("Wiadomość nie może przekraczać 30 znaków!");
+    return;
+  }
   chatInput.value = "";
   chatRef.push({
     name: players[playerId].name,
     message: message
   });
 }
-const maxMessages = 17;
+
+
+const maxMessages = 18;
 
 
 chatRef.limitToLast(maxMessages).on('value', snapshot => {

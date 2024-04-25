@@ -5,7 +5,9 @@ Funkcjonalności:
 - [ ] Implementacja losowych nicków dla każdego nowo zalogowanego użytkownika
 
 Poprawki:
-- [ ] Naprawa błędu związanego z odświeżaniem strony i resetowaniem się całej rozgrywki i min. położonia graczy i coinów
+- [x] Naprawa błędu związanego z odświeżaniem strony i resetowaniem się całej rozgrywki i min. położonia graczy i coinów
+- [ ] Naprawa błędu związanego z pisaniem i poruszaniem się na mapie jednocześnie
+
 
 Testowanie:
 - [ ] Przeprowadzenie testów jednostkowych dla nowo dodanych funkcji
