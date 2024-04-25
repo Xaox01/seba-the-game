@@ -280,6 +280,11 @@ chatInput.addEventListener("keypress", function (e) {
   }
 });
 
+// Dodajemy limit wiadomości na minutę
+const messageLimit = 20;
+let messageCount = 0;
+let messageTimestamp = Date.now();
+
 function sendMessage() {
   const message = chatInput.value;
   // Sprawdzamy, czy wiadomość nie jest pusta
@@ -292,12 +297,25 @@ function sendMessage() {
     alert("Wiadomość nie może przekraczać 30 znaków!");
     return;
   }
+  // Sprawdzamy, czy użytkownik nie przekroczył limitu wiadomości
+  const currentTimestamp = Date.now();
+  if (currentTimestamp - messageTimestamp < 60000) {
+    if (messageCount >= messageLimit) {
+      alert("Przekroczyłeś limit wiadomości na minutę!");
+      return;
+    }
+    messageCount++;
+  } else {
+    messageCount = 1;
+    messageTimestamp = currentTimestamp;
+  }
   chatInput.value = "";
   chatRef.push({
     name: players[playerId].name,
     message: message
   });
 }
+
 
 
 const maxMessages = 18;
