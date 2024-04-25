@@ -1,3 +1,4 @@
+// app.js
 
 const mapData = {
   minX: 1,
@@ -188,7 +189,7 @@ function getRandomSafeSpot() {
       if (addedPlayer.id === playerId) {
         characterElement.classList.add("you");
       }
-      characterElement.innerHTML = (`
+      characterElement.innerHTML = `
         <div class="Character_shadow grid-cell"></div>
         <div class="Character_sprite grid-cell"></div>
         <div class="Character_name-container">
@@ -196,8 +197,9 @@ function getRandomSafeSpot() {
           <span class="Character_coins">0</span>
         </div>
         <div class="Character_you-arrow"></div>
-      `);
+      `;
       playerElements[addedPlayer.id] = characterElement;
+
       characterElement.querySelector(".Character_name").innerText = addedPlayer.name;
       characterElement.querySelector(".Character_coins").innerText = addedPlayer.coins;
       characterElement.setAttribute("data-color", addedPlayer.color);
@@ -241,12 +243,8 @@ function getRandomSafeSpot() {
       gameContainer.removeChild(coinElements[keyToRemove]);
       delete coinElements[keyToRemove];
     });
-
-    playerNameInput.addEventListener("change", (e) => {
-      const newName = e.target.value || createName();
-      playerNameInput.value = newName;
-      playerRef.update({ name: newName });
-    });
+    
+    // No need for player name change event
 
     playerColorButton.addEventListener("click", () => {
       const mySkinIndex = playerColors.indexOf(players[playerId].color);
@@ -261,8 +259,8 @@ function getRandomSafeSpot() {
     if (user) {
       playerId = user.uid;
       playerRef = firebase.database().ref(`players/${playerId}`);
-      const name = createName();
-      playerNameInput.value = name;
+      const name = createName(); // Randomly generate the name
+      //playerNameInput.value = name; // Set it to input (although it's not editable)
       const { x, y } = getRandomSafeSpot();
       playerRef.set({
         id: playerId,
@@ -276,7 +274,7 @@ function getRandomSafeSpot() {
       playerRef.onDisconnect().remove();
       initGame();
     } else {
-      //You're logged out.
+      // You're logged out.
     }
   });
 
@@ -286,4 +284,3 @@ function getRandomSafeSpot() {
     console.log(errorCode, errorMessage);
   });
 })();
-
