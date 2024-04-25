@@ -1,5 +1,3 @@
-// app.js
-
 const mapData = {
   minX: 1,
   maxX: 14,
@@ -71,7 +69,7 @@ function createName() {
   return `${prefix} ${animal}`;
 }
 
-function isSolid(x,y) {
+function isSolid(x, y) {
   const blockedNextSpace = mapData.blockedSpaces[getKeyString(x, y)];
   return (
     blockedNextSpace ||
@@ -141,7 +139,7 @@ function getRandomSafeSpot() {
     }
   }
 
-  function handleKeyPress(xChange=0, yChange=0) {
+  function handleKeyPress(xChange = 0, yChange = 0) {
     const newX = players[playerId].x + xChange;
     const newY = players[playerId].y + yChange;
     if (!isSolid(newX, newY)) {
@@ -153,10 +151,35 @@ function getRandomSafeSpot() {
       if (xChange === -1) {
         players[playerId].direction = "left";
       }
-      playerRef.set(players[playerId]);
+      playerRef.set(players[playerId]); // Aktualizacja danych gracza w bazie danych Firebase
       attemptGrabCoin(newX, newY);
+  
+      // Zapisz stan gry w bazie danych Firebase
+      firebase.database().ref(`gameState/${playerId}`).set({
+        x: newX,
+        y: newY,
+        direction: players[playerId].direction,
+        color: players[playerId].color,
+        coins: players[playerId].coins
+      });
     }
   }
+
+  // Wczytaj stan gry z bazy danych Firebase
+firebase.database().ref(`gameState/${playerId}`).once('value').then((snapshot) => {
+  const data = snapshot.val();
+  if (data) {
+    players[playerId].x = data.x;
+    players[playerId].y = data.y;
+    players[playerId].direction = data.direction;
+    players[playerId].color = data.color;
+    players[playerId].coins = data.coins;
+  }
+});
+
+placeCoin();
+
+  
 
   function initGame() {
     new KeyPressListener("w", () => handleKeyPress(0, -1));
@@ -243,8 +266,6 @@ function getRandomSafeSpot() {
       gameContainer.removeChild(coinElements[keyToRemove]);
       delete coinElements[keyToRemove];
     });
-    
-    // No need for player name change event
 
     playerColorButton.addEventListener("click", () => {
       const mySkinIndex = playerColors.indexOf(players[playerId].color);
@@ -259,24 +280,43 @@ function getRandomSafeSpot() {
     if (user) {
       playerId = user.uid;
       playerRef = firebase.database().ref(`players/${playerId}`);
-      const name = createName(); // Randomly generate the name
-      //playerNameInput.value = name; // Set it to input (although it's not editable)
-      const { x, y } = getRandomSafeSpot();
-      playerRef.set({
-        id: playerId,
-        name,
-        direction: "right",
-        color: randomFromArray(playerColors),
-        x,
-        y,
-        coins: 0,
+      const gameStateRef = firebase.database().ref(`gameState/${playerId}`);
+  
+      // Wczytaj stan gry z bazy danych Firebase
+      gameStateRef.once('value').then((snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const { x, y, direction, color, coins } = data;
+          playerRef.set({
+            id: playerId,
+            name: createName(),
+            direction,
+            color,
+            x,
+            y,
+            coins
+          });
+        } else {
+          const { x, y } = getRandomSafeSpot();
+          playerRef.set({
+            id: playerId,
+            name: createName(),
+            direction: "right",
+            color: randomFromArray(playerColors),
+            x,
+            y,
+            coins: 0,
+          });
+        }
       });
+  
       playerRef.onDisconnect().remove();
       initGame();
     } else {
       // You're logged out.
     }
   });
+  
 
   firebase.auth().signInAnonymously().catch((error) => {
     var errorCode = error.code;
