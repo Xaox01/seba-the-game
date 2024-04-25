@@ -7,16 +7,24 @@
     <link rel="stylesheet" href="/styles.css" type="text/css">
   </head>
   <body>
-
-    <div class="game-container">
-    </div>
-    <div class="player-info">
-      <div>
+    <div class="game-wrapper">
+      <div class="chat-container">
+        <div id="chat-messages"></div>
+        <input id="chat-input" type="text" placeholder="Wiadmość">
+        <button id="chat-send">Wyślij</button>
       </div>
-      <div>
-        <button id="player-color">Change Color</button>
+      <div class="game-container">
+      </div>
+      <div class="player-info">
+        <div>
+        </div>
+        <div>
+          <button id="player-color">Zmień skin</button>
+        </div>
       </div>
     </div>
+    
+    
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>

@@ -9,8 +9,8 @@ html, body {
   background: linear-gradient(180deg, #64BEFF -50%, #6e96ff 69.71%, #2a65ff 150%);
   font-family: 'Source Sans Pro', sans-serif;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: row;
+  
 }
 
 .game-container { 
@@ -20,6 +20,8 @@ html, body {
   background: url(/images/map.png) no-repeat no-repeat;
   transform: scale(3);
   image-rendering: pixelated;
+  margin-left: 320px; /* przesunięcie gry w prawo o szerokość czatu */
+  margin-top: 200px;
 }
 
 .player-info {
@@ -151,4 +153,33 @@ button:active {
 }
 .Coin_shadow {
   background: url(/images/coin-shadow.png) no-repeat no-repeat;
+}
+
+.game-wrapper {
+  display: flex;
+  justify-content: space-around;
+}
+
+.chat-container {
+  max-width: 300px;
+  height: 100%;
+  border: 1px solid #ddd;
+  padding: 10px;
+  overflow-y: auto;
+  margin-right: 200px;
+}
+
+#chat-messages {
+  height: 90%;
+  overflow-y: auto;
+}
+
+#chat-input {
+  width: 70%;
+  margin-top: 10px;
+}
+
+#chat-send {
+  width: 25%;
+  margin-top: 10px;
 }

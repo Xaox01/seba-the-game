@@ -31,40 +31,10 @@ function getKeyString(x, y) {
 
 function createName() {
   const prefix = randomFromArray([
-    "COOL",
-    "SUPER",
-    "HIP",
-    "SMUG",
-    "COOL",
-    "SILKY",
-    "GOOD",
-    "SAFE",
-    "DEAR",
-    "DAMP",
-    "WARM",
-    "RICH",
-    "LONG",
-    "DARK",
-    "SOFT",
-    "BUFF",
-    "DOPE",
+    "CWEL",
   ]);
   const animal = randomFromArray([
-    "BEAR",
-    "DOG",
-    "CAT",
-    "FOX",
-    "LAMB",
-    "LION",
-    "BOAR",
-    "GOAT",
-    "VOLE",
-    "SEAL",
-    "PUMA",
-    "MULE",
-    "BULL",
-    "BIRD",
-    "BUG",
+    "JEBANY",
   ]);
   return `${prefix} ${animal}`;
 }
