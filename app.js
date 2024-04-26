@@ -30,18 +30,31 @@ function getKeyString(x, y) {
 }
 
 function createName() {
-  const prefix = randomFromArray([
-    "test1",
-    "test2",
-    "test3"
-  ]);
-  const animal = randomFromArray([
-    "wspaniały",
-    "magiczny",
-    "mądry"
-  ]);
-  return `${prefix} ${animal}`;
+  // Sprawdź, czy nick jest już zapisany w ciasteczkach
+  if (document.cookie.split(';').some((item) => item.trim().startsWith('playerName='))) {
+    return document.cookie.replace(/(?:(?:^|.*;\s*)playerName\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+  }
+
+  const prefixes = [
+    "anonymous1", "anonymous2", "anonymous3",
+  ];
+
+  const randomFromArray = array => array[Math.floor(Math.random() * array.length)];
+
+  const randomPrefix = randomFromArray(prefixes);  
+  const name = `${randomPrefix}`;
+
+  // Zapisz wygenerowany nick w ciasteczkach
+  document.cookie = `playerName=${name}; expires=Fri, 31 Dec 9999 23:59:59 GMT`;
+
+  return name;
 }
+
+// Testowanie funkcji dla 50 nicków
+for (let i = 1; i <= 50; i++) {
+  console.log(`Nick ${i}: ${createName()}`);
+}
+
 
 function isSolid(x, y) {
   const blockedNextSpace = mapData.blockedSpaces[getKeyString(x, y)];
@@ -337,47 +350,54 @@ chatRef.limitToLast(maxMessages).on('value', snapshot => {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
-  firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-      playerId = user.uid;
-      playerRef = firebase.database().ref(`players/${playerId}`);
-      const gameStateRef = firebase.database().ref(`gameState/${playerId}`);
-  
-      // Wczytaj stan gry z bazy danych Firebase
-      gameStateRef.once('value').then((snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const { x, y, direction, color, coins } = data;
-          playerRef.set({
-            id: playerId,
-            name: createName(),
-            direction,
-            color,
-            x,
-            y,
-            coins
-          });
-        } else {
-          const { x, y } = getRandomSafeSpot();
-          playerRef.set({
-            id: playerId,
-            name: createName(),
-            direction: "right",
-            color: randomFromArray(playerColors),
-            x,
-            y,
-            coins: 0,
-          });
-        }
-      });
-  
-      playerRef.onDisconnect().remove();
-      initGame();
-    } else {
-      // You're logged out.
-    }
-  });
-  
+
+firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+    playerId = user.uid;
+    playerRef = firebase.database().ref(`players/${playerId}`);
+    const gameStateRef = firebase.database().ref(`gameState/${playerId}`);
+
+    // Wczytaj stan gry z bazy danych Firebase
+    gameStateRef.once('value').then((snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Stan gry istnieje, więc go wczytujemy
+        const { x, y, direction, color, coins, name } = data;
+        playerRef.set({
+          id: playerId,
+          name: name || createName(), // Jeśli nick nie istnieje, generujemy nowy
+          direction,
+          color,
+          x,
+          y,
+          coins
+        });
+      } else {
+        // Stan gry nie istnieje, więc generujemy nowy stan gry
+        const { x, y } = getRandomSafeSpot();
+        const name = createName();
+        playerRef.set({
+          id: playerId,
+          name,
+          direction: "right",
+          color: randomFromArray(playerColors),
+          x,
+          y,
+          coins: 0,
+        });
+        // Zapisz nick gracza w bazie danych Firebase
+        gameStateRef.set({ name });
+      }
+    });
+
+    playerRef.onDisconnect().remove();
+    initGame();
+  } else {
+    // You're logged out.
+  }
+});
+
+
 
   firebase.auth().signInAnonymously().catch((error) => {
     var errorCode = error.code;
