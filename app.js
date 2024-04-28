@@ -300,17 +300,20 @@ let messageTimestamp = Date.now();
 
 function sendMessage() {
   const message = chatInput.value;
-  // Sprawdzamy, czy wiadomość nie jest pusta
+
+  const now = new Date();
+  const timestamp = now.toLocaleTimeString();
+
   if (message.trim() === "") {
     alert("Wiadomość nie może być pusta!");
     return;
   }
-  // Sprawdzamy, czy wiadomość nie przekracza 30 znaków
+
   if (message.length > 30) {
     alert("Wiadomość nie może przekraczać 30 znaków!");
     return;
   }
-  // Sprawdzamy, czy użytkownik nie przekroczył limitu wiadomości
+
   const currentTimestamp = Date.now();
   if (currentTimestamp - messageTimestamp < 60000) {
     if (messageCount >= messageLimit) {
@@ -322,33 +325,40 @@ function sendMessage() {
     messageCount = 1;
     messageTimestamp = currentTimestamp;
   }
+
   chatInput.value = "";
+
   chatRef.push({
     name: players[playerId].name,
-    message: message
+    message: message,
+    time: timestamp
   });
 }
 
+chatRef.on('child_added', snapshot => {
+  const data = snapshot.val();
+  const messageElement = document.createElement("p");
 
+  messageElement.textContent = `${data.name} (${data.time}): ${data.message}`;
+  chatMessages.appendChild(messageElement);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
 
-const maxMessages = 18;
-
+const maxMessages = 17;
 
 chatRef.limitToLast(maxMessages).on('value', snapshot => {
-  // Najpierw usuwamy wszystkie istniejące wiadomości
   chatMessages.innerHTML = '';
 
-  // Następnie dodajemy każdą wiadomość do czatu
   snapshot.forEach(childSnapshot => {
     const data = childSnapshot.val();
     const messageElement = document.createElement("p");
-    messageElement.textContent = `${data.name}: ${data.message}`;
+    messageElement.textContent = `${data.name} (${data.time}): ${data.message}`;
     chatMessages.appendChild(messageElement);
   });
 
-  // Przewijamy na dół, aby zobaczyć najnowsze wiadomości
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
+
 
 
 firebase.auth().onAuthStateChanged((user) => {

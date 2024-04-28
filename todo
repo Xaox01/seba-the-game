@@ -1,16 +1,21 @@
 Projekt karaRPG - Lista TODO
 
 Funkcjonalności:
-- [ ] Implenentacja czatu gry w realtime
-- [ ] Implementacja losowych nicków dla każdego nowo zalogowanego użytkownika
+- [x] Implenentacja czatu gry w realtime
+- [x] Implementacja losowych nicków dla każdego nowo zalogowanego użytkownika
 
 Poprawki:
-- [ ] Naprawa błędu związanego z odświeżaniem strony i resetowaniem się całej rozgrywki i min. położonia graczy i coinów
+- [x] Naprawa błędu związanego z odświeżaniem strony i resetowaniem się całej rozgrywki i min. położonia graczy i coinów
 - [x] Naprawa błędu związanego z pisaniem i poruszaniem się na mapie jednocześnie
 
 Testowanie:
 - [ ] Przeprowadzenie testów jednostkowych dla nowo dodanych funkcji
 - [ ] Testowanie interfejsu użytkownika na różnych przeglądarkach i urządzeniach
+
+Chat:
+- [ ] UID, timestap obok wiadomości na chacie
+- [ ] Wprowadzenie wiadomości na "enter"
+
 
 Pomysły:
 - [ ] System dnia i nocy
