@@ -292,6 +292,12 @@ chatInput.addEventListener("keypress", function (e) {
     sendMessage();
   }
 });
+document.addEventListener("keypress", function (e) {
+  if (e.key === 'Enter') {
+    // Jeżeli gracz nacisnął Enter, ustawiamy focus na polu input czatu
+    chatInput.focus();
+  }
+});
 
 // Dodajemy limit wiadomości na minutę
 const messageLimit = 20;

@@ -13,7 +13,7 @@ Testowanie:
 - [ ] Testowanie interfejsu użytkownika na różnych przeglądarkach i urządzeniach
 
 Chat:
-- [ ] UID, timestap obok wiadomości na chacie
+- [x] UID, timestap obok wiadomości na chacie
 - [ ] Wprowadzenie wiadomości na "enter"
 
 
