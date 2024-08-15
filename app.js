@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const mapData = {
   minX: 1,
   maxX: 14,
@@ -95,6 +96,8 @@ function getRandomSafeSpot() {
   ]);
 }
 
+=======
+>>>>>>> 1f41b1c (add prototype EQ and new items)
 (function () {
   let playerId;
   let playerRef;
@@ -107,6 +110,7 @@ function getRandomSafeSpot() {
   const playerNameInput = document.querySelector("#player-name");
   const playerColorButton = document.querySelector("#player-color");
 
+<<<<<<< HEAD
   function placeCoin() {
     const { x, y } = getRandomSafeSpot();
     const coinRef = firebase.database().ref(`coins/${getKeyString(x, y)}`);
@@ -123,10 +127,232 @@ function getRandomSafeSpot() {
     if (coins[key]) {
       firebase.database().ref(`coins/${key}`).remove();
       playerRef.update({ coins: players[playerId].coins + 1 });
+=======
+  const mapData = {
+    minX: 1,
+    maxX: 14,
+    minY: 4,
+    maxY: 12,
+    blockedSpaces: {
+      "7x4": true,
+      "1x11": true,
+      "12x10": true,
+      "4x7": true,
+      "5x7": true,
+      "6x7": true,
+      "8x6": true,
+      "9x6": true,
+      "10x6": true,
+      "7x9": true,
+      "8x9": true,
+      "9x9": true,
+    },
+  };
+
+  const playerColors = ["blue", "red", "orange", "yellow", "green", "purple"];
+  const items = ["coin", "gem", "potion"];
+
+  function randomFromArray(array) {
+    return array[Math.floor(Math.random() * array.length)];
+  }
+
+  function getKeyString(x, y) {
+    return `${x}x${y}`;
+  }
+
+  function createName() {
+    if (document.cookie.split(';').some((item) => item.trim().startsWith('playerName='))) {
+      return document.cookie.replace(/(?:(?:^|.*;\s*)playerName\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+    }
+
+    const prefixes = [
+      "anonymous1", "anonymous2", "anonymous3",
+    ];
+
+    const randomPrefix = randomFromArray(prefixes);
+    const name = `${randomPrefix}`;
+
+    document.cookie = `playerName=${name}; expires=Fri, 31 Dec 9999 23:59:59 GMT`;
+
+    return name;
+  }
+
+  function isSolid(x, y) {
+    const blockedNextSpace = mapData.blockedSpaces[getKeyString(x, y)];
+    return (
+      blockedNextSpace ||
+      x >= mapData.maxX ||
+      x < mapData.minX ||
+      y >= mapData.maxY ||
+      y < mapData.minY
+    );
+  }
+
+  function getRandomSafeSpot() {
+    return randomFromArray([
+      { x: 1, y: 4 },
+      { x: 2, y: 4 },
+      { x: 1, y: 5 },
+      { x: 2, y: 6 },
+      { x: 2, y: 8 },
+      { x: 2, y: 9 },
+      { x: 4, y: 8 },
+      { x: 5, y: 5 },
+      { x: 5, y: 8 },
+      { x: 5, y: 10 },
+      { x: 5, y: 11 },
+      { x: 11, y: 7 },
+      { x: 12, y: 7 },
+      { x: 13, y: 7 },
+      { x: 13, y: 6 },
+      { x: 13, y: 8 },
+      { x: 7, y: 6 },
+      { x: 7, y: 7 },
+      { x: 7, y: 8 },
+      { x: 8, y: 8 },
+      { x: 10, y: 8 },
+      { x: 8, y: 8 },
+      { x: 11, y: 4 },
+    ]);
+  }
+
+  function handleOffline() {
+    alert("Straciłeś połączenie z internetem.");
+  }
+
+  function handleOnline() {
+    alert("Ponownie jesteś online.");
+  }
+
+  window.addEventListener('offline', handleOffline);
+  window.addEventListener('online', handleOnline);
+
+  if (!navigator.onLine) {
+    handleOffline();
+  } else {
+    handleOnline();
+  }
+
+  function placeItem() {
+    const { x, y } = getRandomSafeSpot();
+    const itemType = randomFromArray(items); // Losowanie typu przedmiotu
+    const itemRef = firebase.database().ref(`items/${getKeyString(x, y)}`);
+    itemRef.set({ x, y, type: itemType });
+
+    const itemTimeouts = [2000, 3000, 4000, 5000];
+    setTimeout(() => {
+      placeItem();
+    }, randomFromArray(itemTimeouts));
+  }
+
+  function updateInventory() {
+    const player = players[playerId];
+    document.getElementById('coin-count').innerText = player.coins || 0;
+    document.getElementById('gem-count').innerText = player.gems || 0;
+    document.getElementById('potion-count').innerText = player.potions || 0;
+  }
+
+  function updatePlayerData() {
+    playerRef.once('value').then((snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        players[playerId] = {
+          ...data,
+          coins: data.coins || 0,
+          gems: data.gems || 0,
+          potions: data.potions || 0
+        };
+        updateInventory(); // Zaktualizuj ekwipunek po pobraniu danych
+      }
+    });
+  }
+
+  firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+      playerId = user.uid;
+      console.log("Zalogowany użytkownik UID:", playerId); // Sprawdź, czy UID jest poprawne
+      playerRef = firebase.database().ref(`players/${playerId}`);
+      const gameStateRef = firebase.database().ref(`gameState/${playerId}`);
+
+      gameStateRef.once('value').then((snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const { x, y, direction, color, coins, gems, potions, name } = data;
+          playerRef.set({
+            id: playerId,
+            name: name || createName(),
+            direction,
+            color,
+            x,
+            y,
+            coins: coins || 0,
+            gems: gems || 0,
+            potions: potions || 0
+          });
+        } else {
+          const { x, y } = getRandomSafeSpot();
+          const name = createName();
+          playerRef.set({
+            id: playerId,
+            name,
+            direction: "right",
+            color: randomFromArray(playerColors),
+            x,
+            y,
+            coins: 0,
+            gems: 0,
+            potions: 0
+          });
+          gameStateRef.set({ name });
+        }
+      });
+
+      playerRef.onDisconnect().remove();
+      initGame();
+    } else {
+      // You're logged out.
+    }
+  });
+
+  function attemptGrabItem(x, y) {
+    const key = getKeyString(x, y);
+    if (coins[key]) {
+      const item = coins[key];
+      firebase.database().ref(`items/${key}`).remove();
+
+      let updates = {};
+      if (item.type === "coin") {
+        updates.coins = (players[playerId].coins || 0) + 1;
+      } else if (item.type === "gem") {
+        updates.gems = (players[playerId].gems || 0) + 1;
+      } else if (item.type === "potion") {
+        updates.potions = (players[playerId].potions || 0) + 1;
+      }
+
+      // Zaktualizuj dane gracza w Firebase
+      playerRef.update(updates);
+
+      // Zaktualizuj lokalne dane gracza
+      players[playerId] = {
+        ...players[playerId],
+        ...updates
+      };
+
+      // Zaktualizuj stan gry w Firebase
+      firebase.database().ref(`gameState/${playerId}`).update({
+        coins: players[playerId].coins,
+        gems: players[playerId].gems,     // Dodajemy gemy
+        potions: players[playerId].potions // Dodajemy potiony
+      });
+
+      // Aktualizuj ekwipunek na interfejsie
+      updateInventory();
+>>>>>>> 1f41b1c (add prototype EQ and new items)
     }
   }
 
   function handleKeyPress(xChange = 0, yChange = 0) {
+<<<<<<< HEAD
     // Sprawdzamy, czy pole input czatu jest aktualnie aktywne
     if (document.activeElement !== chatInput) {
       const newX = players[playerId].x + xChange;
@@ -170,6 +396,48 @@ firebase.database().ref(`gameState/${playerId}`).once('value').then((snapshot) =
 placeCoin();
 
   
+=======
+    const newX = players[playerId].x + xChange;
+    const newY = players[playerId].y + yChange;
+    if (!isSolid(newX, newY)) {
+      players[playerId].x = newX;
+      players[playerId].y = newY;
+      if (xChange === 1) {
+        players[playerId].direction = "right";
+      }
+      if (xChange === -1) {
+        players[playerId].direction = "left";
+      }
+      playerRef.set(players[playerId]);
+      attemptGrabItem(newX, newY);
+
+      firebase.database().ref(`gameState/${playerId}`).set({
+        x: newX,
+        y: newY,
+        direction: players[playerId].direction,
+        color: players[playerId].color,
+        coins: players[playerId].coins,
+        gems: players[playerId].gems,
+        potions: players[playerId].potions
+      });
+    }
+  }
+
+  firebase.database().ref(`gameState/${playerId}`).once('value').then((snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      players[playerId].x = data.x;
+      players[playerId].y = data.y;
+      players[playerId].direction = data.direction;
+      players[playerId].color = data.color;
+      players[playerId].coins = data.coins;
+      players[playerId].gems = data.gems;
+      players[playerId].potions = data.potions;
+    }
+  });
+
+  placeItem();
+>>>>>>> 1f41b1c (add prototype EQ and new items)
 
   function initGame() {
     new KeyPressListener("w", () => handleKeyPress(0, -1));
@@ -178,7 +446,11 @@ placeCoin();
     new KeyPressListener("d", () => handleKeyPress(1, 0));
 
     const allPlayersRef = firebase.database().ref(`players`);
+<<<<<<< HEAD
     const allCoinsRef = firebase.database().ref(`coins`);
+=======
+    const allItemsRef = firebase.database().ref(`items`);
+>>>>>>> 1f41b1c (add prototype EQ and new items)
 
     allPlayersRef.on("value", (snapshot) => {
       players = snapshot.val() || {};
@@ -229,6 +501,7 @@ placeCoin();
       delete playerElements[removedKey];
     });
 
+<<<<<<< HEAD
     allCoinsRef.on("value", (snapshot) => {
       coins = snapshot.val() || {};
     });
@@ -251,6 +524,44 @@ placeCoin();
     });
 
     allCoinsRef.on("child_removed", (snapshot) => {
+=======
+    allItemsRef.on("value", (snapshot) => {
+      coins = snapshot.val() || {};
+    });
+
+    allItemsRef.on("child_added", (snapshot) => {
+      const item = snapshot.val();
+      const key = getKeyString(item.x, item.y);
+      coins[key] = item;
+      const itemElement = document.createElement("div");
+      itemElement.classList.add("Item", "grid-cell");
+
+      if (item.type === "coin") {
+        itemElement.innerHTML = `
+          <div class="Coin_shadow grid-cell"></div>
+          <div class="Coin_sprite grid-cell"></div>
+        `;
+      } else if (item.type === "gem") {
+        itemElement.innerHTML = `
+          <div class="Gem_shadow grid-cell"></div>
+          <div class="Gem_sprite grid-cell"></div>
+        `;
+      } else if (item.type === "potion") {
+        itemElement.innerHTML = `
+          <div class="Potion_shadow grid-cell"></div>
+          <div class="Potion_sprite grid-cell"></div>
+        `;
+      }
+
+      const left = 16 * item.x + "px";
+      const top = 16 * item.y - 4 + "px";
+      itemElement.style.transform = `translate3d(${left}, ${top}, 0)`;
+      coinElements[key] = itemElement;
+      gameContainer.appendChild(itemElement);
+    });
+
+    allItemsRef.on("child_removed", (snapshot) => {
+>>>>>>> 1f41b1c (add prototype EQ and new items)
       const { x, y } = snapshot.val();
       const keyToRemove = getKeyString(x, y);
       gameContainer.removeChild(coinElements[keyToRemove]);
@@ -263,6 +574,7 @@ placeCoin();
       playerRef.update({ color: nextColor });
     });
 
+<<<<<<< HEAD
     placeCoin();
   }
 
@@ -415,6 +727,11 @@ firebase.auth().onAuthStateChanged((user) => {
 
 
 
+=======
+    placeItem();
+  }
+
+>>>>>>> 1f41b1c (add prototype EQ and new items)
   firebase.auth().signInAnonymously().catch((error) => {
     var errorCode = error.code;
     var errorMessage = error.message;

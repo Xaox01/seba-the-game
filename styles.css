@@ -154,6 +154,46 @@ button:active {
 .Coin_shadow {
   background: url(/images/coin-shadow.png) no-repeat no-repeat;
 }
+<<<<<<< HEAD
+=======
+.Gem_sprite {
+  background: url(/images/arrow.png) no-repeat no-repeat;
+  /* Dodatkowe style dla gem */
+}
+
+.Potion_sprite {
+  background: url(/images/arrow.png) no-repeat no-repeat;
+  /* Dodatkowe style dla potion */
+}
+
+.inventory-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  display: flex;
+  justify-content: space-around;
+  padding: 10px;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.inventory-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.inventory-item-label {
+  font-weight: bold;
+}
+
+.inventory-item-count {
+  font-size: 1.2em;
+}
+
+>>>>>>> 1f41b1c (add prototype EQ and new items)
 
 .game-wrapper {
   display: flex;
