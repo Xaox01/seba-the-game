@@ -7,8 +7,12 @@
   let coinElements = {};
 
   const gameContainer = document.querySelector(".game-container");
-  const playerNameInput = document.querySelector("#player-name");
   const playerColorButton = document.querySelector("#player-color");
+
+  const chatMessages = document.querySelector("#chat-messages");
+  const chatInput = document.querySelector("#chat-input");
+  const chatSend = document.querySelector("#chat-send");
+  
 
   const mapData = {
     minX: 1,
@@ -47,15 +51,11 @@
       return document.cookie.replace(/(?:(?:^|.*;\s*)playerName\s*\=\s*([^;]*).*$)|^.*$/, "$1");
     }
 
-    const prefixes = [
-      "anonymous1", "anonymous2", "anonymous3",
-    ];
-
+    const prefixes = ["anonymous1", "anonymous2", "anonymous3"];
     const randomPrefix = randomFromArray(prefixes);
     const name = `${randomPrefix}`;
 
     document.cookie = `playerName=${name}; expires=Fri, 31 Dec 9999 23:59:59 GMT`;
-
     return name;
   }
 
@@ -93,7 +93,6 @@
       { x: 7, y: 8 },
       { x: 8, y: 8 },
       { x: 10, y: 8 },
-      { x: 8, y: 8 },
       { x: 11, y: 4 },
     ]);
   }
@@ -117,7 +116,7 @@
 
   function placeItem() {
     const { x, y } = getRandomSafeSpot();
-    const itemType = randomFromArray(items); // Losowanie typu przedmiotu
+    const itemType = randomFromArray(items);
     const itemRef = firebase.database().ref(`items/${getKeyString(x, y)}`);
     itemRef.set({ x, y, type: itemType });
 
@@ -144,7 +143,7 @@
           gems: data.gems || 0,
           potions: data.potions || 0
         };
-        updateInventory(); // Zaktualizuj ekwipunek po pobraniu danych
+        updateInventory();
       }
     });
   }
@@ -152,7 +151,7 @@
   firebase.auth().onAuthStateChanged((user) => {
     if (user) {
       playerId = user.uid;
-      console.log("Zalogowany użytkownik UID:", playerId); // Sprawdź, czy UID jest poprawne
+      console.log("Zalogowany użytkownik UID:", playerId);
       playerRef = firebase.database().ref(`players/${playerId}`);
       const gameStateRef = firebase.database().ref(`gameState/${playerId}`);
 
@@ -191,46 +190,43 @@
 
       playerRef.onDisconnect().remove();
       initGame();
-    } else {
-      // You're logged out.
+      initChat();  // Inicjalizacja chatu po zalogowaniu
     }
   });
 
   function attemptGrabItem(x, y) {
     const key = getKeyString(x, y);
     if (coins[key]) {
-      const item = coins[key];
-      firebase.database().ref(`items/${key}`).remove();
+        const item = coins[key];
+        firebase.database().ref(`items/${key}`).remove();
 
-      let updates = {};
-      if (item.type === "coin") {
-        updates.coins = (players[playerId].coins || 0) + 1;
-      } else if (item.type === "gem") {
-        updates.gems = (players[playerId].gems || 0) + 1;
-      } else if (item.type === "potion") {
-        updates.potions = (players[playerId].potions || 0) + 1;
-      }
+        let updates = {};
+        if (item.type === "coin") {
+            updates.coins = (players[playerId].coins || 0) + 1;
+        } else if (item.type === "gem") {
+            updates.gems = (players[playerId].gems || 0) + 1;
+        } else if (item.type === "potion") {
+            updates.potions = (players[playerId].potions || 0) + 1;
+            alert("You collected a potion!");
+        }
 
-      // Zaktualizuj dane gracza w Firebase
-      playerRef.update(updates);
+        playerRef.update(updates);
 
-      // Zaktualizuj lokalne dane gracza
-      players[playerId] = {
-        ...players[playerId],
-        ...updates
-      };
+        players[playerId] = {
+            ...players[playerId],
+            ...updates
+        };
 
-      // Zaktualizuj stan gry w Firebase
-      firebase.database().ref(`gameState/${playerId}`).update({
-        coins: players[playerId].coins,
-        gems: players[playerId].gems,     // Dodajemy gemy
-        potions: players[playerId].potions // Dodajemy potiony
-      });
+        firebase.database().ref(`gameState/${playerId}`).update({
+            coins: players[playerId].coins,
+            gems: players[playerId].gems,
+            potions: players[playerId].potions
+        });
 
-      // Aktualizuj ekwipunek na interfejsie
-      updateInventory();
+        updateInventory();
     }
-  }
+}
+
 
   function handleKeyPress(xChange = 0, yChange = 0) {
     const newX = players[playerId].x + xChange;
@@ -259,22 +255,9 @@
     }
   }
 
-  firebase.database().ref(`gameState/${playerId}`).once('value').then((snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      players[playerId].x = data.x;
-      players[playerId].y = data.y;
-      players[playerId].direction = data.direction;
-      players[playerId].color = data.color;
-      players[playerId].coins = data.coins;
-      players[playerId].gems = data.gems;
-      players[playerId].potions = data.potions;
-    }
-  });
-
-  placeItem();
-
   function initGame() {
+
+    
     new KeyPressListener("w", () => handleKeyPress(0, -1));
     new KeyPressListener("s", () => handleKeyPress(0, 1));
     new KeyPressListener("a", () => handleKeyPress(-1, 0));
@@ -383,9 +366,66 @@
     placeItem();
   }
 
+  function initChat() {
+    const chatRef = firebase.database().ref('chat');
+    const maxMessages = 17;
+    let messageCount = 0;
+    let messageTimestamp = Date.now();
+
+    // Obsługa wysyłania wiadomości
+    function sendMessage() {
+      const message = chatInput.value.trim();
+      
+      if (message.length < 3 || message.length > 20) {
+        alert("Wiadomość musi mieć od 3 do 20 znaków!");
+        return;
+      }
+
+      const currentTimestamp = Date.now();
+      if (currentTimestamp - messageTimestamp < 60000) {
+        if (messageCount >= 20) {
+          alert("Przekroczyłeś limit wiadomości na minutę!");
+          return;
+        }
+        messageCount++;
+      } else {
+        messageCount = 1;
+        messageTimestamp = currentTimestamp;
+      }
+
+      chatRef.push({
+        name: players[playerId].name,
+        message: message,
+        time: new Date().toLocaleTimeString()
+      });
+
+      chatInput.value = ""; // Wyczyść pole tekstowe po wysłaniu
+    }
+
+    // Nasłuchiwanie wiadomości
+    chatRef.limitToLast(maxMessages).on('value', (snapshot) => {
+      chatMessages.innerHTML = ''; // Czyść przed każdym odświeżeniem
+      snapshot.forEach((childSnapshot) => {
+        const data = childSnapshot.val();
+        const messageElement = document.createElement("p");
+        messageElement.textContent = `${data.name}: ${data.message} (${data.time})`;
+        chatMessages.appendChild(messageElement);
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight; // Przewijanie do najnowszej wiadomości
+    });
+
+    // Obsługa kliknięcia przycisku "Send"
+    chatSend.addEventListener("click", sendMessage);
+
+    // Obsługa wysłania wiadomości przez Enter
+    chatInput.addEventListener("keypress", function (e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  }
+
   firebase.auth().signInAnonymously().catch((error) => {
-    var errorCode = error.code;
-    var errorMessage = error.message;
-    console.log(errorCode, errorMessage);
+    console.log(error.code, error.message);
   });
 })();
