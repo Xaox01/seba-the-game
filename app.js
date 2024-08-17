@@ -12,7 +12,6 @@
   const chatMessages = document.querySelector("#chat-messages");
   const chatInput = document.querySelector("#chat-input");
   const chatSend = document.querySelector("#chat-send");
-  
 
   const mapData = {
     minX: 1,
@@ -133,6 +132,18 @@
     document.getElementById('potion-count').innerText = player.potions || 0;
   }
 
+  function updateGlobalHealthBar() {
+    const player = players[playerId];
+    const healthBarFill = document.getElementById('health-bar-fill');
+    
+    if (healthBarFill) {
+      // Ustawienie paska zdrowia na 20%
+      const healthPercentage = (player.health / 10) * 100;  // Zakładamy, że maksymalne zdrowie to 10
+      healthBarFill.style.width = `${healthPercentage}%`;
+      healthBarFill.style.backgroundColor = 'red';  // Ustawienie koloru paska zdrowia
+    }
+  }
+  
   function updatePlayerData() {
     playerRef.once('value').then((snapshot) => {
       const data = snapshot.val();
@@ -141,9 +152,28 @@
           ...data,
           coins: data.coins || 0,
           gems: data.gems || 0,
-          potions: data.potions || 0
+          potions: data.potions || 0,
+          health: data.health || 2  // Początkowe zdrowie ustawione na 2, co odpowiada 20% maksymalnego zdrowia
         };
         updateInventory();
+        updateGlobalHealthBar();
+      }
+    });
+  }
+  
+  function updatePlayerData() {
+    playerRef.once('value').then((snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        players[playerId] = {
+          ...data,
+          coins: data.coins || 0,
+          gems: data.gems || 0,
+          potions: data.potions || 0,
+          health: data.health || 1  // Początkowe zdrowie ustawione na 1
+        };
+        updateInventory();
+        updateGlobalHealthBar();
       }
     });
   }
@@ -158,7 +188,7 @@
       gameStateRef.once('value').then((snapshot) => {
         const data = snapshot.val();
         if (data) {
-          const { x, y, direction, color, coins, gems, potions, name } = data;
+          const { x, y, direction, color, coins, gems, potions, name, health } = data;
           playerRef.set({
             id: playerId,
             name: name || createName(),
@@ -168,7 +198,8 @@
             y,
             coins: coins || 0,
             gems: gems || 0,
-            potions: potions || 0
+            potions: potions || 0,
+            health: health || 1 // Początkowe zdrowie ustawione na 1
           });
         } else {
           const { x, y } = getRandomSafeSpot();
@@ -182,7 +213,8 @@
             y,
             coins: 0,
             gems: 0,
-            potions: 0
+            potions: 0,
+            health: 1  // Początkowe zdrowie ustawione na 1
           });
           gameStateRef.set({ name });
         }
@@ -197,67 +229,69 @@
   function attemptGrabItem(x, y) {
     const key = getKeyString(x, y);
     if (coins[key]) {
-        const item = coins[key];
-        firebase.database().ref(`items/${key}`).remove();
-
-        let updates = {};
-        if (item.type === "coin") {
-            updates.coins = (players[playerId].coins || 0) + 1;
-        } else if (item.type === "gem") {
-            updates.gems = (players[playerId].gems || 0) + 1;
-        } else if (item.type === "potion") {
-            updates.potions = (players[playerId].potions || 0) + 1;
-            alert("You collected a potion!");
-        }
-
-        playerRef.update(updates);
-
-        players[playerId] = {
-            ...players[playerId],
-            ...updates
-        };
-
-        firebase.database().ref(`gameState/${playerId}`).update({
-            coins: players[playerId].coins,
-            gems: players[playerId].gems,
-            potions: players[playerId].potions
-        });
-
-        updateInventory();
-    }
-}
-
-
-  function handleKeyPress(xChange = 0, yChange = 0) {
-    const newX = players[playerId].x + xChange;
-    const newY = players[playerId].y + yChange;
-    if (!isSolid(newX, newY)) {
-      players[playerId].x = newX;
-      players[playerId].y = newY;
-      if (xChange === 1) {
-        players[playerId].direction = "right";
+      const item = coins[key];
+      firebase.database().ref(`items/${key}`).remove();
+  
+      let updates = {};
+      if (item.type === "coin") {
+        updates.coins = (players[playerId].coins || 0) + 1;
+      } else if (item.type === "gem") {
+        updates.gems = (players[playerId].gems || 0) + 1;
+      } else if (item.type === "potion") {
+        updates.potions = (players[playerId].potions || 0) + 1;
+        // Przywracanie zdrowia po zebraniu potiona
+        updates.health = 10; // Pełne zdrowie (zakładamy maksymalną wartość zdrowia 10)
+        alert("You collected a potion and restored full health!");
       }
-      if (xChange === -1) {
-        players[playerId].direction = "left";
-      }
-      playerRef.set(players[playerId]);
-      attemptGrabItem(newX, newY);
-
-      firebase.database().ref(`gameState/${playerId}`).set({
-        x: newX,
-        y: newY,
-        direction: players[playerId].direction,
-        color: players[playerId].color,
+  
+      playerRef.update(updates);
+  
+      players[playerId] = {
+        ...players[playerId],
+        ...updates
+      };
+  
+      firebase.database().ref(`gameState/${playerId}`).update({
         coins: players[playerId].coins,
         gems: players[playerId].gems,
-        potions: players[playerId].potions
+        potions: players[playerId].potions,
+        health: players[playerId].health
       });
+  
+      updateInventory();
+      updateGlobalHealthBar();  // Aktualizacja paska zdrowia po zebraniu przedmiotu
+    }
+  }
+  
+  function handleKeyPress(xChange, yChange) {
+    if (navigator.onLine) {
+      const player = players[playerId];
+      const newX = player.x + xChange;
+      const newY = player.y + yChange;
+
+      if (!isSolid(newX, newY)) {
+        players[playerId].x = newX;
+        players[playerId].y = newY;
+
+        if (xChange === 1) {
+          players[playerId].direction = "right";
+        }
+        if (xChange === -1) {
+          players[playerId].direction = "left";
+        }
+        if (yChange === 1) {
+          players[playerId].direction = "down";
+        }
+        if (yChange === -1) {
+          players[playerId].direction = "up";
+        }
+        playerRef.update(players[playerId]);
+        attemptGrabItem(newX, newY);
+      }
     }
   }
 
   function initGame() {
-
-    
     new KeyPressListener("w", () => handleKeyPress(0, -1));
     new KeyPressListener("s", () => handleKeyPress(0, 1));
     new KeyPressListener("a", () => handleKeyPress(-1, 0));
@@ -295,7 +329,6 @@
           <span class="Character_name"></span>
           <span class="Character_coins">0</span>
         </div>
-        <div class="Character_you-arrow"></div>
       `;
       playerElements[addedPlayer.id] = characterElement;
 
@@ -372,7 +405,6 @@
     let messageCount = 0;
     let messageTimestamp = Date.now();
 
-    // Obsługa wysyłania wiadomości
     function sendMessage() {
       const message = chatInput.value.trim();
       
@@ -399,31 +431,100 @@
         time: new Date().toLocaleTimeString()
       });
 
-      chatInput.value = ""; // Wyczyść pole tekstowe po wysłaniu
+      chatInput.value = "";
     }
 
-    // Nasłuchiwanie wiadomości
     chatRef.limitToLast(maxMessages).on('value', (snapshot) => {
-      chatMessages.innerHTML = ''; // Czyść przed każdym odświeżeniem
+      chatMessages.innerHTML = '';
       snapshot.forEach((childSnapshot) => {
         const data = childSnapshot.val();
         const messageElement = document.createElement("p");
         messageElement.textContent = `${data.name}: ${data.message} (${data.time})`;
         chatMessages.appendChild(messageElement);
       });
-      chatMessages.scrollTop = chatMessages.scrollHeight; // Przewijanie do najnowszej wiadomości
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     });
 
-    // Obsługa kliknięcia przycisku "Send"
     chatSend.addEventListener("click", sendMessage);
 
-    // Obsługa wysłania wiadomości przez Enter
     chatInput.addEventListener("keypress", function (e) {
       if (e.key === 'Enter') {
         sendMessage();
       }
     });
   }
+
+  // Initialize global health bar
+  function createGlobalHealthBar() {
+    const header = document.querySelector('.header');
+    
+    if (header) {
+      const healthBarContainer = document.createElement('div');
+      healthBarContainer.id = 'global-health-bar';
+      healthBarContainer.style.position = 'absolute';
+      healthBarContainer.style.top = '10px';
+      healthBarContainer.style.left = '50%';
+      healthBarContainer.style.transform = 'translateX(-50%)';
+      healthBarContainer.style.width = '200px';
+      healthBarContainer.style.height = '20px';
+      healthBarContainer.style.backgroundColor = '#ccc';
+      healthBarContainer.style.border = '2px solid #333';
+      healthBarContainer.style.borderRadius = '5px';
+      
+      const healthBarFill = document.createElement('div');
+      healthBarFill.id = 'global-health-bar-fill';
+      healthBarFill.style.height = '100%';
+      healthBarFill.style.backgroundColor = 'red';
+      healthBarFill.style.width = '20%';  // Domyślnie ustawiamy na 20%
+      healthBarFill.style.transition = 'width 0.3s ease-in-out';
+      
+      healthBarContainer.appendChild(healthBarFill);
+      header.appendChild(healthBarContainer);
+    } else {
+      console.error("Element '.header' nie istnieje w DOM. Upewnij się, że istnieje.");
+    }
+  }
+  
+  function updateGlobalHealthBar() {
+    const player = players[playerId];
+    const healthBarFill = document.getElementById('health-bar-fill');
+    
+    if (healthBarFill && player) {
+      const healthPercentage = (player.health / 10) * 100;  // Zakładamy, że maksymalne zdrowie to 10
+      healthBarFill.style.width = `${healthPercentage}%`;
+      healthBarFill.style.backgroundColor = 'red';  // Ustawienie koloru paska zdrowia
+    }
+  }
+  
+  function updatePlayerData() {
+    playerRef.once('value').then((snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        players[playerId] = {
+          ...data,
+          coins: data.coins || 0,
+          gems: data.gems || 0,
+          potions: data.potions || 0,
+          health: data.health || 2  // Początkowe zdrowie ustawione na 2, co odpowiada 20% maksymalnego zdrowia
+        };
+        updateInventory();
+        updateGlobalHealthBar();  // Zaktualizuj pasek zdrowia po pobraniu danych z Firebase
+      }
+    });
+  }
+  
+  // Upewnij się, że pasek zdrowia jest zainicjalizowany natychmiast po załadowaniu strony
+  window.addEventListener('DOMContentLoaded', () => {
+    createGlobalHealthBar();  // Pasek zdrowia ma domyślną wartość 20%
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        playerId = user.uid;
+        playerRef = firebase.database().ref(`players/${playerId}`);
+        updatePlayerData();  // Pobierz dane gracza z Firebase i zaktualizuj pasek zdrowia
+      }
+    });
+  });
+  
 
   firebase.auth().signInAnonymously().catch((error) => {
     console.log(error.code, error.message);
