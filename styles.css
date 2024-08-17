@@ -154,8 +154,6 @@ button:active {
 .Coin_shadow {
   background: url(/images/coin-shadow.png) no-repeat no-repeat;
 }
-<<<<<<< HEAD
-=======
 .Gem_sprite {
   background: url(/images/arrow.png) no-repeat no-repeat;
   /* Dodatkowe style dla gem */
@@ -193,7 +191,6 @@ button:active {
   font-size: 1.2em;
 }
 
->>>>>>> 1f41b1c (add prototype EQ and new items)
 
 .game-wrapper {
   display: flex;

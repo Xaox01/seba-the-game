@@ -1,103 +1,3 @@
-<<<<<<< HEAD
-const mapData = {
-  minX: 1,
-  maxX: 14,
-  minY: 4,
-  maxY: 12,
-  blockedSpaces: {
-    "7x4": true,
-    "1x11": true,
-    "12x10": true,
-    "4x7": true,
-    "5x7": true,
-    "6x7": true,
-    "8x6": true,
-    "9x6": true,
-    "10x6": true,
-    "7x9": true,
-    "8x9": true,
-    "9x9": true,
-  },
-};
-
-const playerColors = ["blue", "red", "orange", "yellow", "green", "purple"];
-
-function randomFromArray(array) {
-  return array[Math.floor(Math.random() * array.length)];
-}
-
-function getKeyString(x, y) {
-  return `${x}x${y}`;
-}
-
-function createName() {
-  // Sprawdź, czy nick jest już zapisany w ciasteczkach
-  if (document.cookie.split(';').some((item) => item.trim().startsWith('playerName='))) {
-    return document.cookie.replace(/(?:(?:^|.*;\s*)playerName\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-  }
-
-  const prefixes = [
-    "anonymous1", "anonymous2", "anonymous3",
-  ];
-
-  const randomFromArray = array => array[Math.floor(Math.random() * array.length)];
-
-  const randomPrefix = randomFromArray(prefixes);  
-  const name = `${randomPrefix}`;
-
-  // Zapisz wygenerowany nick w ciasteczkach
-  document.cookie = `playerName=${name}; expires=Fri, 31 Dec 9999 23:59:59 GMT`;
-
-  return name;
-}
-
-// Testowanie funkcji dla 50 nicków
-for (let i = 1; i <= 50; i++) {
-  console.log(`Nick ${i}: ${createName()}`);
-}
-
-
-function isSolid(x, y) {
-  const blockedNextSpace = mapData.blockedSpaces[getKeyString(x, y)];
-  return (
-    blockedNextSpace ||
-    x >= mapData.maxX ||
-    x < mapData.minX ||
-    y >= mapData.maxY ||
-    y < mapData.minY
-  )
-}
-
-function getRandomSafeSpot() {
-  return randomFromArray([
-    { x: 1, y: 4 },
-    { x: 2, y: 4 },
-    { x: 1, y: 5 },
-    { x: 2, y: 6 },
-    { x: 2, y: 8 },
-    { x: 2, y: 9 },
-    { x: 4, y: 8 },
-    { x: 5, y: 5 },
-    { x: 5, y: 8 },
-    { x: 5, y: 10 },
-    { x: 5, y: 11 },
-    { x: 11, y: 7 },
-    { x: 12, y: 7 },
-    { x: 13, y: 7 },
-    { x: 13, y: 6 },
-    { x: 13, y: 8 },
-    { x: 7, y: 6 },
-    { x: 7, y: 7 },
-    { x: 7, y: 8 },
-    { x: 8, y: 8 },
-    { x: 10, y: 8 },
-    { x: 8, y: 8 },
-    { x: 11, y: 4 },
-  ]);
-}
-
-=======
->>>>>>> 1f41b1c (add prototype EQ and new items)
 (function () {
   let playerId;
   let playerRef;
@@ -110,24 +10,6 @@ function getRandomSafeSpot() {
   const playerNameInput = document.querySelector("#player-name");
   const playerColorButton = document.querySelector("#player-color");
 
-<<<<<<< HEAD
-  function placeCoin() {
-    const { x, y } = getRandomSafeSpot();
-    const coinRef = firebase.database().ref(`coins/${getKeyString(x, y)}`);
-    coinRef.set({ x, y });
-
-    const coinTimeouts = [2000, 3000, 4000, 5000];
-    setTimeout(() => {
-      placeCoin();
-    }, randomFromArray(coinTimeouts));
-  }
-
-  function attemptGrabCoin(x, y) {
-    const key = getKeyString(x, y);
-    if (coins[key]) {
-      firebase.database().ref(`coins/${key}`).remove();
-      playerRef.update({ coins: players[playerId].coins + 1 });
-=======
   const mapData = {
     minX: 1,
     maxX: 14,
@@ -347,56 +229,10 @@ function getRandomSafeSpot() {
 
       // Aktualizuj ekwipunek na interfejsie
       updateInventory();
->>>>>>> 1f41b1c (add prototype EQ and new items)
     }
   }
 
   function handleKeyPress(xChange = 0, yChange = 0) {
-<<<<<<< HEAD
-    // Sprawdzamy, czy pole input czatu jest aktualnie aktywne
-    if (document.activeElement !== chatInput) {
-      const newX = players[playerId].x + xChange;
-      const newY = players[playerId].y + yChange;
-      if (!isSolid(newX, newY)) {
-        players[playerId].x = newX;
-        players[playerId].y = newY;
-        if (xChange === 1) {
-          players[playerId].direction = "right";
-        }
-        if (xChange === -1) {
-          players[playerId].direction = "left";
-        }
-        playerRef.set(players[playerId]); // Aktualizacja danych gracza w bazie danych Firebase
-        attemptGrabCoin(newX, newY);
-    
-        // Zapisz stan gry w bazie danych Firebase
-        firebase.database().ref(`gameState/${playerId}`).set({
-          x: newX,
-          y: newY,
-          direction: players[playerId].direction,
-          color: players[playerId].color,
-          coins: players[playerId].coins
-        });
-      }
-    }
-  }
-  
-  // Wczytaj stan gry z bazy danych Firebase
-firebase.database().ref(`gameState/${playerId}`).once('value').then((snapshot) => {
-  const data = snapshot.val();
-  if (data) {
-    players[playerId].x = data.x;
-    players[playerId].y = data.y;
-    players[playerId].direction = data.direction;
-    players[playerId].color = data.color;
-    players[playerId].coins = data.coins;
-  }
-});
-
-placeCoin();
-
-  
-=======
     const newX = players[playerId].x + xChange;
     const newY = players[playerId].y + yChange;
     if (!isSolid(newX, newY)) {
@@ -437,7 +273,6 @@ placeCoin();
   });
 
   placeItem();
->>>>>>> 1f41b1c (add prototype EQ and new items)
 
   function initGame() {
     new KeyPressListener("w", () => handleKeyPress(0, -1));
@@ -446,11 +281,7 @@ placeCoin();
     new KeyPressListener("d", () => handleKeyPress(1, 0));
 
     const allPlayersRef = firebase.database().ref(`players`);
-<<<<<<< HEAD
-    const allCoinsRef = firebase.database().ref(`coins`);
-=======
     const allItemsRef = firebase.database().ref(`items`);
->>>>>>> 1f41b1c (add prototype EQ and new items)
 
     allPlayersRef.on("value", (snapshot) => {
       players = snapshot.val() || {};
@@ -501,30 +332,6 @@ placeCoin();
       delete playerElements[removedKey];
     });
 
-<<<<<<< HEAD
-    allCoinsRef.on("value", (snapshot) => {
-      coins = snapshot.val() || {};
-    });
-
-    allCoinsRef.on("child_added", (snapshot) => {
-      const coin = snapshot.val();
-      const key = getKeyString(coin.x, coin.y);
-      coins[key] = true;
-      const coinElement = document.createElement("div");
-      coinElement.classList.add("Coin", "grid-cell");
-      coinElement.innerHTML = `
-        <div class="Coin_shadow grid-cell"></div>
-        <div class="Coin_sprite grid-cell"></div>
-      `;
-      const left = 16 * coin.x + "px";
-      const top = 16 * coin.y - 4 + "px";
-      coinElement.style.transform = `translate3d(${left}, ${top}, 0)`;
-      coinElements[key] = coinElement;
-      gameContainer.appendChild(coinElement);
-    });
-
-    allCoinsRef.on("child_removed", (snapshot) => {
-=======
     allItemsRef.on("value", (snapshot) => {
       coins = snapshot.val() || {};
     });
@@ -561,7 +368,6 @@ placeCoin();
     });
 
     allItemsRef.on("child_removed", (snapshot) => {
->>>>>>> 1f41b1c (add prototype EQ and new items)
       const { x, y } = snapshot.val();
       const keyToRemove = getKeyString(x, y);
       gameContainer.removeChild(coinElements[keyToRemove]);
@@ -574,164 +380,9 @@ placeCoin();
       playerRef.update({ color: nextColor });
     });
 
-<<<<<<< HEAD
-    placeCoin();
-  }
-
-const chatMessages = document.querySelector("#chat-messages");
-const chatInput = document.querySelector("#chat-input");
-const chatSend = document.querySelector("#chat-send");
-
-
-
-// Tworzymy referencję do czatu w bazie danych Firebase
-const chatRef = firebase.database().ref('chat');
-
-// Nasłuchujemy na nowe wiadomości w czacie
-chatRef.on('child_added', snapshot => {
-  const data = snapshot.val();
-  const messageElement = document.createElement("p");
-  messageElement.textContent = `${data.name}: ${data.message}`;
-  chatMessages.appendChild(messageElement);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-});
-
-chatSend.addEventListener("click", sendMessage);
-
-// Dodajemy nasłuchiwacz zdarzeń 'keypress' do pola input czatu
-chatInput.addEventListener("keypress", function (e) {
-  if (e.key === 'Enter') {
-    sendMessage();
-  }
-});
-document.addEventListener("keypress", function (e) {
-  if (e.key === 'Enter') {
-    // Jeżeli gracz nacisnął Enter, ustawiamy focus na polu input czatu
-    chatInput.focus();
-  }
-});
-
-// Dodajemy limit wiadomości na minutę
-const messageLimit = 20;
-let messageCount = 0;
-let messageTimestamp = Date.now();
-
-function sendMessage() {
-  const message = chatInput.value;
-
-  const now = new Date();
-  const timestamp = now.toLocaleTimeString();
-
-  if (message.trim() === "") {
-    alert("Wiadomość nie może być pusta!");
-    return;
-  }
-
-  if (message.length > 30) {
-    alert("Wiadomość nie może przekraczać 30 znaków!");
-    return;
-  }
-
-  const currentTimestamp = Date.now();
-  if (currentTimestamp - messageTimestamp < 60000) {
-    if (messageCount >= messageLimit) {
-      alert("Przekroczyłeś limit wiadomości na minutę!");
-      return;
-    }
-    messageCount++;
-  } else {
-    messageCount = 1;
-    messageTimestamp = currentTimestamp;
-  }
-
-  chatInput.value = "";
-
-  chatRef.push({
-    name: players[playerId].name,
-    message: message,
-    time: timestamp
-  });
-}
-
-chatRef.on('child_added', snapshot => {
-  const data = snapshot.val();
-  const messageElement = document.createElement("p");
-
-  messageElement.textContent = `${data.name} (${data.time}): ${data.message}`;
-  chatMessages.appendChild(messageElement);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-});
-
-const maxMessages = 17;
-
-chatRef.limitToLast(maxMessages).on('value', snapshot => {
-  chatMessages.innerHTML = '';
-
-  snapshot.forEach(childSnapshot => {
-    const data = childSnapshot.val();
-    const messageElement = document.createElement("p");
-    messageElement.textContent = `${data.name} (${data.time}): ${data.message}`;
-    chatMessages.appendChild(messageElement);
-  });
-
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-});
-
-
-
-firebase.auth().onAuthStateChanged((user) => {
-  if (user) {
-    playerId = user.uid;
-    playerRef = firebase.database().ref(`players/${playerId}`);
-    const gameStateRef = firebase.database().ref(`gameState/${playerId}`);
-
-    // Wczytaj stan gry z bazy danych Firebase
-    gameStateRef.once('value').then((snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        // Stan gry istnieje, więc go wczytujemy
-        const { x, y, direction, color, coins, name } = data;
-        playerRef.set({
-          id: playerId,
-          name: name || createName(), // Jeśli nick nie istnieje, generujemy nowy
-          direction,
-          color,
-          x,
-          y,
-          coins
-        });
-      } else {
-        // Stan gry nie istnieje, więc generujemy nowy stan gry
-        const { x, y } = getRandomSafeSpot();
-        const name = createName();
-        playerRef.set({
-          id: playerId,
-          name,
-          direction: "right",
-          color: randomFromArray(playerColors),
-          x,
-          y,
-          coins: 0,
-        });
-        // Zapisz nick gracza w bazie danych Firebase
-        gameStateRef.set({ name });
-      }
-    });
-
-    playerRef.onDisconnect().remove();
-    initGame();
-  } else {
-    // You're logged out.
-  }
-});
-
-
-
-=======
     placeItem();
   }
 
->>>>>>> 1f41b1c (add prototype EQ and new items)
   firebase.auth().signInAnonymously().catch((error) => {
     var errorCode = error.code;
     var errorMessage = error.message;
