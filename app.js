@@ -160,23 +160,6 @@
       }
     });
   }
-  
-  function updatePlayerData() {
-    playerRef.once('value').then((snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        players[playerId] = {
-          ...data,
-          coins: data.coins || 0,
-          gems: data.gems || 0,
-          potions: data.potions || 0,
-          health: data.health || 1  // Początkowe zdrowie ustawione na 1
-        };
-        updateInventory();
-        updateGlobalHealthBar();
-      }
-    });
-  }
 
   firebase.auth().onAuthStateChanged((user) => {
     if (user) {
@@ -262,32 +245,38 @@
       updateGlobalHealthBar();  // Aktualizacja paska zdrowia po zebraniu przedmiotu
     }
   }
-  
+
   function handleKeyPress(xChange, yChange) {
-    if (navigator.onLine) {
-      const player = players[playerId];
-      const newX = player.x + xChange;
-      const newY = player.y + yChange;
-
-      if (!isSolid(newX, newY)) {
-        players[playerId].x = newX;
-        players[playerId].y = newY;
-
-        if (xChange === 1) {
-          players[playerId].direction = "right";
-        }
-        if (xChange === -1) {
-          players[playerId].direction = "left";
-        }
-        if (yChange === 1) {
-          players[playerId].direction = "down";
-        }
-        if (yChange === -1) {
-          players[playerId].direction = "up";
-        }
-        playerRef.update(players[playerId]);
-        attemptGrabItem(newX, newY);
+    const player = players[playerId];  // Pobieramy dane gracza
+  
+    // Dodajemy sprawdzenie, czy player jest zdefiniowany
+    if (!player) {
+      console.error("Player is undefined. Make sure the player's data has been loaded.");
+      return;  // Jeśli gracz nie jest zdefiniowany, nie wykonujemy dalszych operacji
+    }
+  
+    const newX = player.x + xChange;
+    const newY = player.y + yChange;
+  
+    if (!isSolid(newX, newY)) {
+      players[playerId].x = newX;
+      players[playerId].y = newY;
+  
+      if (xChange === 1) {
+        players[playerId].direction = "right";
       }
+      if (xChange === -1) {
+        players[playerId].direction = "left";
+      }
+      if (yChange === 1) {
+        players[playerId].direction = "down";
+      }
+      if (yChange === -1) {
+        players[playerId].direction = "up";
+      }
+  
+      playerRef.update(players[playerId]);  // Aktualizacja danych gracza w Firebase
+      attemptGrabItem(newX, newY);  // Sprawdzenie, czy gracz zajął przedmiot
     }
   }
 
@@ -296,6 +285,7 @@
     new KeyPressListener("s", () => handleKeyPress(0, 1));
     new KeyPressListener("a", () => handleKeyPress(-1, 0));
     new KeyPressListener("d", () => handleKeyPress(1, 0));
+    new KeyPressListener(" ", () => handleAttack(players, playerId, playerRef));
 
     const allPlayersRef = firebase.database().ref(`players`);
     const allItemsRef = firebase.database().ref(`items`);
@@ -305,41 +295,47 @@
       Object.keys(players).forEach((key) => {
         const characterState = players[key];
         let el = playerElements[key];
-        el.querySelector(".Character_name").innerText = characterState.name;
-        el.querySelector(".Character_coins").innerText = characterState.coins;
-        el.setAttribute("data-color", characterState.color);
-        el.setAttribute("data-direction", characterState.direction);
-        const left = 16 * characterState.x + "px";
-        const top = 16 * characterState.y - 4 + "px";
-        el.style.transform = `translate3d(${left}, ${top}, 0)`;
+
+        // Tworzenie elementów dla każdego gracza
+        if (!el) {
+          const characterElement = document.createElement("div");
+          characterElement.classList.add("Character", "grid-cell");
+
+          // Tworzenie paska zdrowia
+          const healthBarContainer = document.createElement('div');
+          healthBarContainer.classList.add('health-bar');
+          const healthBarFill = document.createElement('div');
+          healthBarFill.id = `health-bar-fill-${key}`;
+          healthBarFill.classList.add('health-bar-fill');
+          healthBarFill.style.width = `${(characterState.health / 10) * 100}%`;
+          healthBarContainer.appendChild(healthBarFill);
+          characterElement.appendChild(healthBarContainer);
+
+          // Dodanie postaci do gry
+          characterElement.innerHTML += `
+            <div class="Character_shadow grid-cell"></div>
+            <div class="Character_sprite grid-cell"></div>
+            <div class="Character_name-container">
+              <span class="Character_name">${characterState.name}</span>
+              <span class="Character_coins">${characterState.coins}</span>
+            </div>
+          `;
+          playerElements[key] = characterElement;
+          const left = 16 * characterState.x + "px";
+          const top = 16 * characterState.y - 4 + "px";
+          characterElement.style.transform = `translate3d(${left}, ${top}, 0)`;
+          gameContainer.appendChild(characterElement);
+        } else {
+          // Aktualizacja istniejących elementów gracza
+          el.querySelector(".Character_name").innerText = characterState.name;
+          el.querySelector(".Character_coins").innerText = characterState.coins;
+          el.setAttribute("data-color", characterState.color);
+          el.setAttribute("data-direction", characterState.direction);
+          const left = 16 * characterState.x + "px";
+          const top = 16 * characterState.y - 4 + "px";
+          el.style.transform = `translate3d(${left}, ${top}, 0)`;
+        }
       });
-    });
-
-    allPlayersRef.on("child_added", (snapshot) => {
-      const addedPlayer = snapshot.val();
-      const characterElement = document.createElement("div");
-      characterElement.classList.add("Character", "grid-cell");
-      if (addedPlayer.id === playerId) {
-        characterElement.classList.add("you");
-      }
-      characterElement.innerHTML = `
-        <div class="Character_shadow grid-cell"></div>
-        <div class="Character_sprite grid-cell"></div>
-        <div class="Character_name-container">
-          <span class="Character_name"></span>
-          <span class="Character_coins">0</span>
-        </div>
-      `;
-      playerElements[addedPlayer.id] = characterElement;
-
-      characterElement.querySelector(".Character_name").innerText = addedPlayer.name;
-      characterElement.querySelector(".Character_coins").innerText = addedPlayer.coins;
-      characterElement.setAttribute("data-color", addedPlayer.color);
-      characterElement.setAttribute("data-direction", addedPlayer.direction);
-      const left = 16 * addedPlayer.x + "px";
-      const top = 16 * addedPlayer.y - 4 + "px";
-      characterElement.style.transform = `translate3d(${left}, ${top}, 0)`;
-      gameContainer.appendChild(characterElement);
     });
 
     allPlayersRef.on("child_removed", (snapshot) => {
