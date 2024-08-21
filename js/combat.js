@@ -23,7 +23,7 @@ function handleAttack(players, playerId, playerRef) {
         // Odejmujemy 1 punkt zdrowia, ale nie pozwalamy zejść poniżej zera
         otherPlayer.health = Math.max(otherPlayer.health - 1, 0);
 
-        // Aktualizujemy pasek zdrowia natychmiast w DOM
+        // Natychmiast aktualizujemy pasek zdrowia przeciwnika w DOM
         updateGlobalHealthBarForPlayer(otherPlayerId, otherPlayer);
 
         // Aktualizacja zdrowia przeciwnika w Firebase
@@ -38,16 +38,19 @@ function handleAttack(players, playerId, playerRef) {
 }
 
 function updateGlobalHealthBarForPlayer(playerId, player) {
+  // Znalezienie elementu paska zdrowia dla konkretnego gracza
   const healthBarFill = document.getElementById(`health-bar-fill-${playerId}`);
 
-  // Sprawdzamy, czy pasek zdrowia istnieje i czy gracz jest zdefiniowany
   if (!healthBarFill) {
     console.warn(`Health bar for player ${playerId} not found!`);
     return;
   }
 
-  if (player) {
-    const healthPercentage = (player.health / 10) * 100;  // Zakładamy, że maksymalne zdrowie to 10
-    healthBarFill.style.width = `${healthPercentage}%`;
-  }
+  // Ustawienie procentowego zdrowia na podstawie aktualnego zdrowia
+  const healthPercentage = (player.health / 10) * 100;
+  healthBarFill.style.width = `${healthPercentage}%`;
+
+  // Upewnienie się, że kolor paska zdrowia jest czerwony
+  healthBarFill.style.backgroundColor = 'yellow';
 }
+

@@ -50,7 +50,7 @@
       return document.cookie.replace(/(?:(?:^|.*;\s*)playerName\s*\=\s*([^;]*).*$)|^.*$/, "$1");
     }
 
-    const prefixes = ["anonymous1", "anonymous2", "anonymous3"];
+    const prefixes = ["anonymous1", "anonymous2", "anonymous3", "anonymous4"];
     const randomPrefix = randomFromArray(prefixes);
     const name = `${randomPrefix}`;
 
@@ -137,10 +137,9 @@
     const healthBarFill = document.getElementById('health-bar-fill');
     
     if (healthBarFill) {
-      // Ustawienie paska zdrowia na 20%
-      const healthPercentage = (player.health / 10) * 100;  // Zakładamy, że maksymalne zdrowie to 10
+      const healthPercentage = (player.health / 10) * 100;  
       healthBarFill.style.width = `${healthPercentage}%`;
-      healthBarFill.style.backgroundColor = 'red';  // Ustawienie koloru paska zdrowia
+      healthBarFill.style.backgroundColor = 'red';
     }
   }
   
@@ -153,7 +152,7 @@
           coins: data.coins || 0,
           gems: data.gems || 0,
           potions: data.potions || 0,
-          health: data.health || 2  // Początkowe zdrowie ustawione na 2, co odpowiada 20% maksymalnego zdrowia
+          health: data.health || 2
         };
         updateInventory();
         updateGlobalHealthBar();
@@ -164,7 +163,6 @@
   firebase.auth().onAuthStateChanged((user) => {
     if (user) {
       playerId = user.uid;
-      console.log("Zalogowany użytkownik UID:", playerId);
       playerRef = firebase.database().ref(`players/${playerId}`);
       const gameStateRef = firebase.database().ref(`gameState/${playerId}`);
 
@@ -182,7 +180,7 @@
             coins: coins || 0,
             gems: gems || 0,
             potions: potions || 0,
-            health: health || 1 // Początkowe zdrowie ustawione na 1
+            health: health || 1
           });
         } else {
           const { x, y } = getRandomSafeSpot();
@@ -197,7 +195,7 @@
             coins: 0,
             gems: 0,
             potions: 0,
-            health: 1  // Początkowe zdrowie ustawione na 1
+            health: 1
           });
           gameStateRef.set({ name });
         }
@@ -205,7 +203,7 @@
 
       playerRef.onDisconnect().remove();
       initGame();
-      initChat();  // Inicjalizacja chatu po zalogowaniu
+      initChat(); 
     }
   });
 
@@ -222,8 +220,7 @@
         updates.gems = (players[playerId].gems || 0) + 1;
       } else if (item.type === "potion") {
         updates.potions = (players[playerId].potions || 0) + 1;
-        // Przywracanie zdrowia po zebraniu potiona
-        updates.health = 10; // Pełne zdrowie (zakładamy maksymalną wartość zdrowia 10)
+        updates.health = 10; 
         alert("You collected a potion and restored full health!");
       }
   
@@ -242,17 +239,16 @@
       });
   
       updateInventory();
-      updateGlobalHealthBar();  // Aktualizacja paska zdrowia po zebraniu przedmiotu
+      updateGlobalHealthBar();  
     }
   }
 
   function handleKeyPress(xChange, yChange) {
-    const player = players[playerId];  // Pobieramy dane gracza
+    const player = players[playerId];  
   
-    // Dodajemy sprawdzenie, czy player jest zdefiniowany
     if (!player) {
       console.error("Player is undefined. Make sure the player's data has been loaded.");
-      return;  // Jeśli gracz nie jest zdefiniowany, nie wykonujemy dalszych operacji
+      return;
     }
   
     const newX = player.x + xChange;
@@ -275,8 +271,8 @@
         players[playerId].direction = "up";
       }
   
-      playerRef.update(players[playerId]);  // Aktualizacja danych gracza w Firebase
-      attemptGrabItem(newX, newY);  // Sprawdzenie, czy gracz zajął przedmiot
+      playerRef.update(players[playerId]);
+      attemptGrabItem(newX, newY);  
     }
   }
 
@@ -296,12 +292,10 @@
         const characterState = players[key];
         let el = playerElements[key];
 
-        // Tworzenie elementów dla każdego gracza
         if (!el) {
           const characterElement = document.createElement("div");
           characterElement.classList.add("Character", "grid-cell");
 
-          // Tworzenie paska zdrowia
           const healthBarContainer = document.createElement('div');
           healthBarContainer.classList.add('health-bar');
           const healthBarFill = document.createElement('div');
@@ -311,7 +305,6 @@
           healthBarContainer.appendChild(healthBarFill);
           characterElement.appendChild(healthBarContainer);
 
-          // Dodanie postaci do gry
           characterElement.innerHTML += `
             <div class="Character_shadow grid-cell"></div>
             <div class="Character_sprite grid-cell"></div>
@@ -326,7 +319,6 @@
           characterElement.style.transform = `translate3d(${left}, ${top}, 0)`;
           gameContainer.appendChild(characterElement);
         } else {
-          // Aktualizacja istniejących elementów gracza
           el.querySelector(".Character_name").innerText = characterState.name;
           el.querySelector(".Character_coins").innerText = characterState.coins;
           el.setAttribute("data-color", characterState.color);
@@ -450,7 +442,6 @@
     });
   }
 
-  // Initialize global health bar
   function createGlobalHealthBar() {
     const header = document.querySelector('.header');
     
@@ -471,7 +462,7 @@
       healthBarFill.id = 'global-health-bar-fill';
       healthBarFill.style.height = '100%';
       healthBarFill.style.backgroundColor = 'red';
-      healthBarFill.style.width = '20%';  // Domyślnie ustawiamy na 20%
+      healthBarFill.style.width = '20%';
       healthBarFill.style.transition = 'width 0.3s ease-in-out';
       
       healthBarContainer.appendChild(healthBarFill);
@@ -480,47 +471,35 @@
       console.error("Element '.header' nie istnieje w DOM. Upewnij się, że istnieje.");
     }
   }
-  
-  function updateGlobalHealthBar() {
-    const player = players[playerId];
-    const healthBarFill = document.getElementById('health-bar-fill');
-    
-    if (healthBarFill && player) {
-      const healthPercentage = (player.health / 10) * 100;  // Zakładamy, że maksymalne zdrowie to 10
-      healthBarFill.style.width = `${healthPercentage}%`;
-      healthBarFill.style.backgroundColor = 'red';  // Ustawienie koloru paska zdrowia
+
+  let fps, lastFrameTime = 0, frameCount = 0, lastTimeStamp = performance.now();
+
+  function calculateFPS(timeStamp) {
+    frameCount++;
+    const delta = (timeStamp - lastTimeStamp) / 1000;
+    if (delta >= 1) {
+      fps = Math.round(frameCount / delta);
+      document.getElementById('fps-value').innerText = fps;
+      frameCount = 0;
+      lastTimeStamp = timeStamp;
     }
+    lastFrameTime = timeStamp;
+    requestAnimationFrame(calculateFPS);
   }
-  
-  function updatePlayerData() {
-    playerRef.once('value').then((snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        players[playerId] = {
-          ...data,
-          coins: data.coins || 0,
-          gems: data.gems || 0,
-          potions: data.potions || 0,
-          health: data.health || 2  // Początkowe zdrowie ustawione na 2, co odpowiada 20% maksymalnego zdrowia
-        };
-        updateInventory();
-        updateGlobalHealthBar();  // Zaktualizuj pasek zdrowia po pobraniu danych z Firebase
-      }
-    });
-  }
-  
-  // Upewnij się, że pasek zdrowia jest zainicjalizowany natychmiast po załadowaniu strony
+
   window.addEventListener('DOMContentLoaded', () => {
-    createGlobalHealthBar();  // Pasek zdrowia ma domyślną wartość 20%
+    createGlobalHealthBar();
+    
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         playerId = user.uid;
         playerRef = firebase.database().ref(`players/${playerId}`);
-        updatePlayerData();  // Pobierz dane gracza z Firebase i zaktualizuj pasek zdrowia
+        updatePlayerData();
       }
     });
+
+    requestAnimationFrame(calculateFPS);
   });
-  
 
   firebase.auth().signInAnonymously().catch((error) => {
     console.log(error.code, error.message);
